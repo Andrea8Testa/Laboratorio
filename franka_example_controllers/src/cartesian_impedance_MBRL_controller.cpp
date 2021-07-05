@@ -1,6 +1,6 @@
 // Copyright (c) 2017 Franka Emika GmbH
 // Use of this source code is governed by the Apache-2.0 license, see LICENSE
-#include <franka_example_controllers/cartesian_impedance_QLMPC_controller.h>
+#include <franka_example_controllers/cartesian_impedance_MBRL_controller.h>
 
 #include <cmath>
 #include <memory>
@@ -38,7 +38,7 @@
 
 namespace franka_example_controllers {
 
-    bool CartesianImpedanceQLMPCController::init(hardware_interface::RobotHW* robot_hw,
+    bool CartesianImpedanceMBRLController::init(hardware_interface::RobotHW* robot_hw,
         ros::NodeHandle& node_handle) {
         std::vector<double> cartesian_stiffness_vector;
         std::vector<double> cartesian_damping_vector;
@@ -50,23 +50,23 @@ namespace franka_example_controllers {
         franka_q_pose_pub = node_handle.advertise<geometry_msgs::PoseStamped>("/franka_q_pose", 20); // 1000
 
         sub_equilibrium_pose_ = node_handle.subscribe(
-            "/QLMPC_pose", 20, &CartesianImpedanceQLMPCController::equilibriumPoseCallback, this,
+            "/QLMPC_pose", 20, &CartesianImpedanceMBRLController::equilibriumPoseCallback, this,
             ros::TransportHints().reliable().tcpNoDelay());
         
-        sub_damping_ = node_handle.subscribe("/D_information", 20, &CartesianImpedanceQLMPCController::dampingCallback, this,
+        sub_damping_ = node_handle.subscribe("/D_information", 20, &CartesianImpedanceMBRLController::dampingCallback, this,
             ros::TransportHints().reliable().tcpNoDelay()); //20 previous queue
-        sub_stiffness_ = node_handle.subscribe("/K_information", 20, &CartesianImpedanceQLMPCController::stiffnessCallback, this,
+        sub_stiffness_ = node_handle.subscribe("/K_information", 20, &CartesianImpedanceMBRLController::stiffnessCallback, this,
             ros::TransportHints().reliable().tcpNoDelay()); //20 previous queue
 
         std::string arm_id;
         if (!node_handle.getParam("arm_id", arm_id)) {
-            ROS_ERROR_STREAM("CartesianImpedanceQLMPCController: Could not read parameter arm_id");
+            ROS_ERROR_STREAM("CartesianImpedanceMBRLController: Could not read parameter arm_id");
             return false;
         }
         std::vector<std::string> joint_names;
         if (!node_handle.getParam("joint_names", joint_names) || joint_names.size() != 7) {
             ROS_ERROR(
-                "CartesianImpedanceQLMPCController: Invalid or no joint_names parameters provided, "
+                "CartesianImpedanceMBRLController: Invalid or no joint_names parameters provided, "
                 "aborting controller init!");
             return false;
         }
@@ -74,7 +74,7 @@ namespace franka_example_controllers {
         auto* model_interface = robot_hw->get<franka_hw::FrankaModelInterface>();
         if (model_interface == nullptr) {
             ROS_ERROR_STREAM(
-                "CartesianImpedanceQLMPCController: Error getting model interface from hardware");
+                "CartesianImpedanceMBRLController: Error getting model interface from hardware");
             return false;
         }
         try {
@@ -83,7 +83,7 @@ namespace franka_example_controllers {
         }
         catch (hardware_interface::HardwareInterfaceException& ex) {
             ROS_ERROR_STREAM(
-                "CartesianImpedanceQLMPCController: Exception getting model handle from interface: "
+                "CartesianImpedanceMBRLController: Exception getting model handle from interface: "
                 << ex.what());
             return false;
         }
@@ -91,7 +91,7 @@ namespace franka_example_controllers {
         auto* state_interface = robot_hw->get<franka_hw::FrankaStateInterface>();
         if (state_interface == nullptr) {
             ROS_ERROR_STREAM(
-                "CartesianImpedanceQLMPCController: Error getting state interface from hardware");
+                "CartesianImpedanceMBRLController: Error getting state interface from hardware");
             return false;
         }
         try {
@@ -100,7 +100,7 @@ namespace franka_example_controllers {
         }
         catch (hardware_interface::HardwareInterfaceException& ex) {
             ROS_ERROR_STREAM(
-                "CartesianImpedanceQLMPCController: Exception getting state handle from interface: "
+                "CartesianImpedanceMBRLController: Exception getting state handle from interface: "
                 << ex.what());
             return false;
         }
@@ -108,7 +108,7 @@ namespace franka_example_controllers {
         auto* effort_joint_interface = robot_hw->get<hardware_interface::EffortJointInterface>();
         if (effort_joint_interface == nullptr) {
             ROS_ERROR_STREAM(
-                "CartesianImpedanceQLMPCController: Error getting effort joint interface from hardware");
+                "CartesianImpedanceMBRLController: Error getting effort joint interface from hardware");
             return false;
         }
         for (size_t i = 0; i < 7; ++i) {
@@ -117,7 +117,7 @@ namespace franka_example_controllers {
             }
             catch (const hardware_interface::HardwareInterfaceException& ex) {
                 ROS_ERROR_STREAM(
-                    "CartesianImpedanceQLMPCController: Exception getting joint handles: " << ex.what());
+                    "CartesianImpedanceMBRLController: Exception getting joint handles: " << ex.what());
                 return false;
             }
         }
@@ -133,7 +133,7 @@ namespace franka_example_controllers {
         return true;
     }
 
-    void CartesianImpedanceQLMPCController::starting(const ros::Time& /*time*/) {
+    void CartesianImpedanceMBRLController::starting(const ros::Time& /*time*/) {
         // compute initial velocity with jacobian and set x_attractor and q_d_nullspace
         // to initial configuration
         initial_state = state_handle_->getRobotState();
@@ -235,7 +235,7 @@ namespace franka_example_controllers {
             digfilt = exp(-msrTimestep / filtTime); // 0.6
     }
 
-    void CartesianImpedanceQLMPCController::update(const ros::Time& /*time*/,
+    void CartesianImpedanceMBRLController::update(const ros::Time& /*time*/,
         const ros::Duration& /*period*/) {
         // get state variables
         std::array<double, 49> inertia_array = model_handle_->getMass();
@@ -421,10 +421,12 @@ namespace franka_example_controllers {
         //     position_d_(2) = pos_imp_t(2) + position_init(2) + 0.001 * cos(5*cont_task_setpoint/1000);
 
         // else if (cont_task_setpoint == 5000)
-        //         position_d_(2) = pos_imp_t(2) + position_init(2) + 0.001 * cos(5*5);
-        // position_d_(2) = pos_imp_t(2) + position_init(2) - 0.1 * ext_wrench_t(2)/stiffness(2,2);
-        // if (position_d_(2) > 0.65)
-        //         position_d_(2) = 0.65;
+        //        position_d_(2) = pos_imp_t(2) + position_init(2) + 0.001 * cos(5*5);
+        position_d_(2) = pos_imp_t(2) + position_init(2) - 0.1 * ext_wrench_t(2)/stiffness(2,2);
+        if (position_d_(2) > 0.65)
+                position_d_(2) = 0.65;
+        if (position_d_(2) < 0.35)
+                position_d_(2) = 0.35;
 
         inv_mass = mass.inverse();
 
@@ -678,6 +680,9 @@ namespace franka_example_controllers {
         // printf("pos_imp_t \n");
         // printf("%f \n",  pos_imp_t(2) );
 
+        printf("ext_wrench \n");
+        printf("%f \n", ext_wrench(2) );
+
         printf("********************** \n");
         
 
@@ -696,7 +701,7 @@ namespace franka_example_controllers {
         */
     }
 
-    Eigen::Matrix<double, 7, 1> CartesianImpedanceQLMPCController::saturateTorqueRate(
+    Eigen::Matrix<double, 7, 1> CartesianImpedanceMBRLController::saturateTorqueRate(
         const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
         const Eigen::Matrix<double, 7, 1>& tau_J_d) {  // NOLINT (readability-identifier-naming)
         Eigen::Matrix<double, 7, 1> tau_d_saturated{};
@@ -708,7 +713,7 @@ namespace franka_example_controllers {
         return tau_d_saturated;
     }
 
-    void CartesianImpedanceQLMPCController::equilibriumPoseCallback(
+    void CartesianImpedanceMBRLController::equilibriumPoseCallback(
         const geometry_msgs::PoseStampedConstPtr& msg) {
         position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
         Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
@@ -719,15 +724,15 @@ namespace franka_example_controllers {
         }
     }
 
-    void CartesianImpedanceQLMPCController::dampingCallback(const std_msgs::Float64::ConstPtr& msg) {
+    void CartesianImpedanceMBRLController::dampingCallback(const std_msgs::Float64::ConstPtr& msg) {
         damping_importato = msg->data;
     }
 
-    void CartesianImpedanceQLMPCController::stiffnessCallback(const std_msgs::Float64::ConstPtr& msg) {
+    void CartesianImpedanceMBRLController::stiffnessCallback(const std_msgs::Float64::ConstPtr& msg) {
         stiffness_importata = msg->data;
     }
 
 } 
 
-PLUGINLIB_EXPORT_CLASS(franka_example_controllers::CartesianImpedanceQLMPCController,
+PLUGINLIB_EXPORT_CLASS(franka_example_controllers::CartesianImpedanceMBRLController,
     controller_interface::ControllerBase)

@@ -52,7 +52,7 @@
 
 namespace franka_example_controllers {
 
-    class CartesianImpedanceQLMPCController : public controller_interface::MultiInterfaceController<
+    class CartesianImpedanceMBRLController : public controller_interface::MultiInterfaceController<
         franka_hw::FrankaModelInterface,
         hardware_interface::EffortJointInterface,
         franka_hw::FrankaStateInterface> {
