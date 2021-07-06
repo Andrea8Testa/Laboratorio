@@ -102,7 +102,7 @@ class jey_MBRL():
         self.num_test_data_files = 2
         
         # Definition of the limits
-        self.K_uplim = 5000   # 5000
+        self.K_uplim = 1000   # 5000
         self.K_lowlim = 50   # 500
         self.K_mean = (self.K_uplim + self.K_lowlim)/2
 
@@ -117,9 +117,16 @@ class jey_MBRL():
         self.action_std  = [self.K_uplim - self.K_mean, self.D_uplim - self.D_mean]
         self.action_norm = (self.action_mean, self.action_std)
 
-        self.xn_train, self.yn_train_d, self.xn_test, self.yn_test_d, self.xy_norm = np.load('Prepared_random_New_Z.npy', allow_pickle=True)
-        self.x_mean_v, self.x_std_v, self.y_mean_v,  self.y_std_v = self.xy_norm
+        # load data
+        a_file = open("Confronto_dataDict_robot_py2.pkl", "rb")
+        self.training_dict = pickle.load(a_file)
+        #self.training_dict = torch.load('tensors.pt')
+        self.x_mean_v, self.x_std_v, self.y_mean_v, self.y_std_v = self.training_dict['xy_norm']
+        self.xy_norm = (self.x_mean_v, self.x_std_v, self.y_mean_v, self.y_std_v)
+        self.xn_train = self.training_dict['xn_train']
+        self.yn_train_d = self.training_dict['yn_train']
         
+        """
         Lista = torch.tensor([4.33437933e-01, -1.34527728e-01,  0.00000000e+00,  4.33437933e-01, -1.34527728e-01,  0.00000000e+00, -7.24582659e-02, -7.78561571e-01,
             1.73652520e-02, -2.43883667e+00, -4.57371573e-02,  1.65940576e+00, 8.01873818e-01,  5.85478123e-03, -6.78069001e-04,  8.99185710e-05, -6.20888243e-04,  6.99012569e-03, 1.35717106e-04,  8.19624265e-04 ])
     
@@ -137,6 +144,7 @@ class jey_MBRL():
         self.xy_norm[0][21] = self.action_mean [1]
         self.xy_norm[1][20] = self.action_std [0]
         self.xy_norm[1][21] = self.action_std [1]
+        """
         
         print("self.xy_norm[1]", self.xy_norm[1])
          
@@ -317,7 +325,7 @@ class jey_MBRL():
     #definition of Cross Entropy Method
     def CEM_norm_p(self, x_initial_, action_dim_, time_horizon_, num_samples_, xy_norm_, NN_model_, num_ensembles_cem_):
         
-        K_uplim_  = 5000; K_lowlim_ = 50;   K_mean_ = ( K_uplim_ +  K_lowlim_)/2
+        K_uplim_  = 1000; K_lowlim_ = 50;   K_mean_ = ( K_uplim_ +  K_lowlim_)/2
         D_uplim_  = 5;  D_lowlim_ = 0.1;   D_mean_ = ( D_uplim_ +  D_lowlim_)/2
         
         assert(x_initial_.shape[0] == 1)  # state should be a row vector (without actions)
@@ -512,9 +520,14 @@ if __name__=='__main__':
     Device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Using {} Device".format(Device))
 
-    # Loading the Data
-    xn_train, yn_train_d, xn_test, yn_test_d, xy_norm = np.load('Prepared_random_New_Z.npy', allow_pickle=True)
-    x_mean_v, x_std_v, y_mean_v,  y_std_v = xy_norm
+
+    # Loading the data
+    a_file = open("Confronto_dataDict_robot_py2.pkl", "rb")
+    training_dict = pickle.load(a_file)
+    #self.training_dict = torch.load('tensors.pt')
+    x_mean_v, x_std_v, y_mean_v, y_std_v = training_dict['xy_norm']
+    xn_train = training_dict['xn_train']
+    yn_train_d = training_dict['yn_train']
     print("x_mean_v", x_mean_v)
     print("x_std_v", x_std_v)
     print("y_mean_v", y_mean_v)
@@ -538,10 +551,10 @@ if __name__=='__main__':
         NN_delta_norm_cem_ensemble["NN" + str(i)] = NN_model(n_x, n_d, n_h, n_y, print_NN=False)
 
     # Loading the NN models
-    #for i in range(num_ensembles):
-    #    Path = "/home/jey/Training_data/NN_Models/NN_Paper_ensem_10" + str(i)
-    #    NN_delta_norm_cem_ensemble["NN" + str(i)] = NN_model(n_x, n_d, n_h, n_y, print_NN=False)
-    #    NN_delta_norm_cem_ensemble["NN" + str(i)].load_state_dict(torch.load(Path))
+    for i in range(num_ensembles):
+        Path = "/home/franka/andrea_ws/src/Package/NN_Paper_ensem_10" + str(i)
+        NN_delta_norm_cem_ensemble["NN" + str(i)] = NN_model(n_x, n_d, n_h, n_y, print_NN=False)
+        NN_delta_norm_cem_ensemble["NN" + str(i)].load_state_dict(torch.load(Path))
 
     for i in range(num_ensembles):
         NN_delta_norm_cem_ensemble["NN" + str(i)].to("cpu")
