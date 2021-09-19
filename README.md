@@ -74,8 +74,8 @@ The present repository contains two main folders. [franka_example_controllers][f
 
 3. Build the package:
    ```sh
-  cd ~/catkin_ws 
-  catkin_make
+    cd ~/catkin_ws 
+    catkin_make
    ```
 
 <!-- USAGE EXAMPLES -->
