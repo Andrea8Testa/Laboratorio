@@ -94,7 +94,7 @@ See the [open issues](https://github.com/Andrea8Testa/Laboratorio/issues) for a 
 <!-- CONTACT -->
 ## Contact
 
-Your Name - [Andrea Testa][linkedin-url] - email andrea3.testa@gmail.com
+[Andrea Testa][linkedin-url] - email andrea3.testa@gmail.com
 
 
 <!-- ACKNOWLEDGEMENTS -->
