@@ -71,6 +71,7 @@ add_library(franka_example_controllers
   src/joint_impedance_example_controller.cpp
   src/cartesian_impedance_example_controller.cpp
   src/cartesian_impedance_QLMPC_controller.cpp
+  src/cartesian_impedance_MBRL_controller.cpp
   src/force_example_controller.cpp
   src/dual_arm_cartesian_impedance_example_controller.cpp
   src/teleop_joint_pd_example_controller.cpp

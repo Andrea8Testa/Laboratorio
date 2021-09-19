@@ -46,11 +46,16 @@ namespace franka_example_controllers {
         franka_EE_pose_pub = node_handle.advertise<geometry_msgs::PoseStamped>("/franka_ee_pose", 20);
         franka_EE_velocity_pub = node_handle.advertise<geometry_msgs::TwistStamped>("/franka_ee_velocity", 20);
         franka_EE_wrench_pub = node_handle.advertise<geometry_msgs::WrenchStamped>("/franka_ee_wrench", 20); // 1000
+        franka_q_velocity_pub = node_handle.advertise<geometry_msgs::PoseStamped>("/franka_q_velocity", 20);
+        franka_q_pose_pub = node_handle.advertise<geometry_msgs::PoseStamped>("/franka_q_pose", 20); // 1000
 
         sub_equilibrium_pose_ = node_handle.subscribe(
             "/QLMPC_pose", 20, &CartesianImpedanceQLMPCController::equilibriumPoseCallback, this,
             ros::TransportHints().reliable().tcpNoDelay());
+        
         sub_damping_ = node_handle.subscribe("/D_information", 20, &CartesianImpedanceQLMPCController::dampingCallback, this,
+            ros::TransportHints().reliable().tcpNoDelay()); //20 previous queue
+        sub_stiffness_ = node_handle.subscribe("/K_information", 20, &CartesianImpedanceQLMPCController::stiffnessCallback, this,
             ros::TransportHints().reliable().tcpNoDelay()); //20 previous queue
 
         std::string arm_id;
@@ -220,6 +225,7 @@ namespace franka_example_controllers {
         inertia_imp = 10.; //10.
         translational_stiffness = 500.;//1000.; // last "Roveda" value = 7500
         rotational_stiffness = 50.;//50.;   // last "Roveda" value = 15000
+        stiffness_importata = translational_stiffness;
 
         msrTimestep = 0.001;
         filtTime = msrTimestep * 2.;
@@ -281,6 +287,30 @@ namespace franka_example_controllers {
         initialization = true;
         }
 
+        // q publisher
+        geometry_msgs::PoseStamped q_msg;
+        q_msg.pose.position.x = q[0];
+        q_msg.pose.position.y = q[1];
+        q_msg.pose.position.z = q[2];
+        q_msg.pose.orientation.x = q[3];
+        q_msg.pose.orientation.y = q[4];
+        q_msg.pose.orientation.z = q[5];
+        q_msg.pose.orientation.w = q[6];
+
+        franka_q_pose_pub.publish(q_msg);
+
+        // dq publisher
+        geometry_msgs::PoseStamped dq_msg;
+        dq_msg.pose.position.x = dq[0];
+        dq_msg.pose.position.y = dq[1];
+        dq_msg.pose.position.z = dq[2];
+        dq_msg.pose.orientation.x = dq[3];
+        dq_msg.pose.orientation.y = dq[4];
+        dq_msg.pose.orientation.z = dq[5];
+        dq_msg.pose.orientation.w = dq[6];
+
+        franka_q_velocity_pub.publish(dq_msg);
+
         // // saturation set point
         // if ((position_d_target_[2] - position_d_[2]) > 0.05) {
         //     position_d_target_[2] = position_d_[2] + 0.05;
@@ -298,6 +328,7 @@ namespace franka_example_controllers {
         // }
 
         damping(3, 3) = damping_importato * 2.0 * mass_imp * sqrt(translational_stiffness / mass_imp);
+        stiffness(3, 3) = stiffness_importata;
 
         // pose publisher
         geometry_msgs::PoseStamped pose_msg;
@@ -614,7 +645,7 @@ namespace franka_example_controllers {
         // printf("%f \n",joint_pos_d(j) - q(j));
         // }
 
-        printf("********************** \n");
+        //printf("********************** \n");
 
         }
 
@@ -628,6 +659,18 @@ namespace franka_example_controllers {
 
         printf("position_d_target_ \n");
         printf("%f \n",  position_d_target_(2) );
+
+        printf("K \n");
+        printf("%f \n", stiffness(3,3) );
+
+        // printf("K2 \n");
+        // printf("%f \n", stiffness(2,2) );
+
+        printf("D \n");
+        printf("%f \n", damping(3,3) );
+
+        // printf("D2 \n");
+        // printf("%f \n", damping(2,2) );
 
         // printf("position init \n");
         // printf("%f \n",  position_init(2) );
@@ -678,6 +721,10 @@ namespace franka_example_controllers {
 
     void CartesianImpedanceQLMPCController::dampingCallback(const std_msgs::Float64::ConstPtr& msg) {
         damping_importato = msg->data;
+    }
+
+    void CartesianImpedanceQLMPCController::stiffnessCallback(const std_msgs::Float64::ConstPtr& msg) {
+        stiffness_importata = msg->data;
     }
 
 } 

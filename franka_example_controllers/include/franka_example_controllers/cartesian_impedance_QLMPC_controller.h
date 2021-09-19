@@ -88,6 +88,8 @@ namespace franka_example_controllers {
         ros::Publisher franka_EE_pose_pub;
         ros::Publisher franka_EE_velocity_pub;
         ros::Publisher franka_EE_wrench_pub;
+	ros::Publisher franka_q_pose_pub;
+        ros::Publisher franka_q_velocity_pub;
         int cont_task_setpoint;
 
         double msrTimestep;
@@ -115,6 +117,7 @@ namespace franka_example_controllers {
         double inertia_imp;
         double translational_stiffness;
         double rotational_stiffness;
+	double stiffness_importata;
 
         franka::RobotState initial_state;
 
@@ -131,6 +134,8 @@ namespace franka_example_controllers {
         void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
         ros::Subscriber sub_damping_;
         void dampingCallback(const std_msgs::Float64::ConstPtr& msg);
+	ros::Subscriber sub_stiffness_;
+        void stiffnessCallback(const std_msgs::Float64::ConstPtr& msg);
     };
 
 }  // namespace franka_example_controllers#pragma once

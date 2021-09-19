@@ -771,10 +771,13 @@ class Q_LMPC():
             self.u_3 = (u_D_3_norm[0,0]*self.x_std_v[3] + self.x_mean_v[3]).detach().numpy()
             self.Dr_3 = (u_D_3_norm[0,1]*self.x_std_v[4] + self.x_mean_v[4]).detach().numpy()
             
-            if (self.u_3 - self.u_old) > 0.04:
-                self.u_3 = self.u_old + 0.04
-            elif (self.u_3 - self.u_old) < -0.04:
-                self.u_3 = self.u_old - 0.04
+            if(wrench.wrench.force.z==0):
+                self.u_3 = self.u_old
+            else:
+                if (self.u_3 - self.u_old) > 0.04:
+                    self.u_3 = self.u_old + 0.04
+                elif (self.u_3 - self.u_old) < -0.04:
+                    self.u_3 = self.u_old - 0.04
             """
             
             "Set point generation throught CEM"
