@@ -59,7 +59,7 @@ The proposed approach has been validated using a Franka EMIKA panda robot as a t
 
 ### Installation
 
-1. Create a Catkin workspace in a directory of your choice. Open terminal and navigate to src folder in your catkin workspace:
+1. Create a catkin workspace in a directory of your choice. Open terminal and navigate to src folder in your catkin workspace:
    ```sh
    cd ~/catkin_ws/src
    ```
