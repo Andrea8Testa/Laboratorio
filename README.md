@@ -80,7 +80,7 @@ The present repository contains two main folders. [franka_example_controllers][f
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-In folder [franka_example_controllers][frankaexamplecontrollers] a set of example controllers for controlling the robot via ROS are implemented. Among them, there are the two low-level cartesian impedance controllers to run the Q-LMPC ([cartesian_impedance_QLMPC_controller.h][impedance_QLMPC]) and the MBRL ([cartesian_impedance_MBRL_controller.h][impedance_MBRL]) updating strategies.
+In folder [franka_example_controllers][frankaexamplecontrollers] a set of example controllers for controlling the robot via ROS are implemented. Among them, there are the two low-level cartesian impedance controllers to run the Q-LMPVIC ([cartesian_impedance_QLMPC_controller.h][impedance_QLMPC]) and the MBRLVIC ([cartesian_impedance_MBRL_controller.h][impedance_MBRL]) updating strategies.
 
 These stretegies are implemented in folder [Updating stategies][updatingstrategies] ([Q_LMPC_simplified_revised.py][QLMPC]) ([MBRL_controller_confronto.py][MBRL]). The other files refer to past versions of the abovementioned codes. In the same folder are available also the models of the pre-trained artificial neural networks and the data used to normalize them. 
 
