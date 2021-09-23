@@ -382,10 +382,10 @@ namespace franka_example_controllers {
 
         Eigen::Vector3d ext_wrench_t, ext_wrench_r;
         Eigen::VectorXd ext_wrench(6);
-        Eigen::MatrixXd Jpinv(7,6);
-        Jpinv = jacobian.completeOrthogonalDecomposition().pseudoInverse();
+        Eigen::MatrixXd JpinvT(7,6);
+        JpinvT = (jacobian.transpose()).completeOrthogonalDecomposition().pseudoInverse();
         double th_F_msr = 2.;
-        ext_wrench = ((Jpinv*tau_ext).transpose());
+        ext_wrench = -((JpinvT*tau_ext).transpose()
 
         for (int j = 0; j < 3; ++j){
             ext_wrench_t(j) = ext_wrench(j);
@@ -552,7 +552,7 @@ namespace franka_example_controllers {
         ctrl_velocity = velocity_d_ + Kpos*position_err;
         
         joint_velocity_d.setZero();
-        joint_velocity_d = Jpinv*ctrl_velocity;
+        joint_velocity_d = JpinvT*ctrl_velocity;
         
         joint_pos_d += joint_velocity_d*0.001;
         
