@@ -971,7 +971,7 @@ if __name__=='__main__':
     actor = ActorNN()
     critic = CriticNN()
     
-        # Loading the NN models
+    # Loading the NN models (comment these lines in case you want to perform your own training)
     PATH_model0 = "/home/franka/andrea_ws/src/Package/model_0"
     PATH_model1 = "/home/franka/andrea_ws/src/Package/model_1"
     PATH_actor = "/home/franka/andrea_ws/src/Package/actor"
@@ -985,8 +985,8 @@ if __name__=='__main__':
     
     actor = ActorNN().to(Device)
     critic = CriticNN().to(Device)
-    actor.load_state_dict(torch.load(PATH_actor))
-    critic.load_state_dict(torch.load(PATH_critic))
+    actor.load_state_dict(torch.load(PATH_actor)) #comment in case you want to perform your own training
+    critic.load_state_dict(torch.load(PATH_critic)) #comment in case you want to perform your own training
     
     print("QLMPC controller is starting")
     myController = Q_LMPC(Device, model_approximator, actor, critic, num_ensembles, T, BS, N)
