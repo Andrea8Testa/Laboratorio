@@ -52,7 +52,7 @@ namespace franka_example_controllers {
         sub_equilibrium_pose_ = node_handle.subscribe(
             "/QLMPC_pose", 20, &CartesianImpedanceMBRLController::equilibriumPoseCallback, this,
             ros::TransportHints().reliable().tcpNoDelay());
-        
+
         sub_damping_ = node_handle.subscribe("/D_information", 20, &CartesianImpedanceMBRLController::dampingCallback, this,
             ros::TransportHints().reliable().tcpNoDelay()); //20 previous queue
         sub_stiffness_ = node_handle.subscribe("/K_information", 20, &CartesianImpedanceMBRLController::stiffnessCallback, this,
@@ -121,7 +121,7 @@ namespace franka_example_controllers {
                 return false;
             }
         }
-  
+
         position_d_.setZero();
         orientation_d_.coeffs() << 0.0, 0.0, 0.0, 1.0;
         position_d_target_.setZero();
@@ -170,19 +170,19 @@ namespace franka_example_controllers {
         Kp.setZero();
         Kd.setZero();
         Ki.setZero();
-        
+
         Kpos.setZero();
         for (int j = 0; j < 6; ++j)
             Kpos(j,j) = 0.25;
-        
+
         Kp(0,0) = 500.; //1000.
         Kp(1,1) = 750.; //1500.
         Kp(2,2) = 750.; //1500.
         Kp(3,3) = 750.; //1500.
-        Kp(4,4) = 400.; 
+        Kp(4,4) = 400.;
         Kp(5,5) = 200.;
         Kp(6,6) = 150.;
-        
+
         Kd(0,0) = 16.; //32.
         Kd(1,1) = 20.; //40.
         Kd(2,2) = 15.; //30.
@@ -190,7 +190,7 @@ namespace franka_example_controllers {
         Kd(4,4) = 10.; //20.
         Kd(5,5) = 10.; //20.
         Kd(6,6) = 5.; //10. rimasto 10 nella prova
-        
+
         Ki(0,0) = 7.5; //15.
         Ki(1,1) = 7.5; //15.
         Ki(2,2) = 10.; //20.
@@ -198,7 +198,7 @@ namespace franka_example_controllers {
         Ki(4,4) = 20.; //40.
         Ki(5,5) = 15.; //30. rimasto 30 nella prova
         Ki(6,6) = 20.; //40. rimasto 40 nelòla prova
-        
+
 
         for (int j = 0; j < 3; ++j)
         {
@@ -345,12 +345,12 @@ namespace franka_example_controllers {
         orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
 
         cont_task_setpoint++;
-        
+
         Eigen::Affine3d transform_cmd(Eigen::Matrix4d::Map(initial_state.O_T_EE.data()));
         Eigen::Matrix3d R_msr(transform.rotation());
         Eigen::Matrix3d R_cmd(transform_cmd.rotation());
         Eigen::Matrix3d R_comp = R_msr.inverse() * R_cmd;
-        
+
         Eigen::Matrix3d T_dangles_to_w_cd;
         Eigen::Matrix3d dT_dangles_to_w_cd;
         Eigen::Vector3d rpy; //euler angles in RPY convention
@@ -383,9 +383,12 @@ namespace franka_example_controllers {
         Eigen::Vector3d ext_wrench_t, ext_wrench_r;
         Eigen::VectorXd ext_wrench(6);
         Eigen::MatrixXd Jpinv(7,6);
+        Eigen::MatrixXd JpinvT(6,7);
+
         Jpinv = jacobian.completeOrthogonalDecomposition().pseudoInverse();
+        JpinvT = (jacobian.transpose()).completeOrthogonalDecomposition().pseudoInverse();
         double th_F_msr = 2.;
-        ext_wrench = ((Jpinv*tau_ext).transpose());
+        ext_wrench = -(JpinvT*tau_ext).transpose();
 
         for (int j = 0; j < 3; ++j){
             ext_wrench_t(j) = ext_wrench(j);
@@ -441,7 +444,7 @@ namespace franka_example_controllers {
             acc_imp_t(j) = 0.;
             acc_imp_r(j) = 0.;
         }
-        
+
         T_dangles_to_w_cd(0,0) = 1;
         T_dangles_to_w_cd(0,1) = 0.;
         T_dangles_to_w_cd(0,2) = sin(rpy(1));
@@ -461,12 +464,12 @@ namespace franka_example_controllers {
         dT_dangles_to_w_cd(2,0) = 0.;
         dT_dangles_to_w_cd(2,1) = cos(rpy(0))*drpy_filt(0);
         dT_dangles_to_w_cd(2,2) = -( sin(rpy(0))*cos(rpy(1))*drpy_filt(0) + cos(rpy(0))*sin(rpy(1))*drpy_filt(1) );
-            
+
         acc_imp_t = inv_mass.topLeftCorner(3,3) * ( ext_wrench_t - stiffness.topLeftCorner(3,3) * (pos_imp_t + position_init - position_d_) - damping.topLeftCorner(3,3) * vel_imp_t );
         acc_imp_r = inv_mass.bottomRightCorner(3,3) * ( T_dangles_to_w_cd.transpose()*(R_msr.inverse()*ext_wrench_r) + stiffness.bottomRightCorner(3,3) * rpy + damping.bottomRightCorner(3,3) * drpy_filt );
 
         Eigen::VectorXd cmd_cart_pose(6), impdamp_t(3), impstiff_t(3);
-        
+
         for (int j = 0; j < 3; ++j)
         {
             vel_imp_t(j) += acc_imp_t(j)*0.001;
@@ -478,7 +481,7 @@ namespace franka_example_controllers {
             impdamp_t(j) = damping(j,j);
             impstiff_t(j) = stiffness(j,j);
         }
-        
+
         // for (int j = 0; j < 3; ++j)
         // {
         //     drpy_cmd(j) = acc_imp_r(j)*0.001;
@@ -534,38 +537,38 @@ namespace franka_example_controllers {
         //     dq_filt_Eigen(j) = dq_filt[j];
         // tau_nullspace = inertia * (NullSpace * (-M_nullspace.inverse() * D_nullspace * dq_filt_Eigen));
 
-        // tau_imp << inertia * (Jpinv * acc_cmd); // once we get the required acceleration, we can obtain the torques 
+        // tau_imp << inertia * (Jpinv * acc_cmd); // once we get the required acceleration, we can obtain the torques
         // tau_d << tau_imp + coriolis + tau_nullspace; // + (jacobian.transpose()*ext_wrench);
 
         ///////////////////Position control///////////////////
-        
+
         for (int j = 0; j < 7; ++j)
                 dq_filt_Eigen(j) = dq_filt_Eigen(j) * digfilt + (1-digfilt) * dq(j);
 
         // compute control
         Eigen::VectorXd tau_ctrl(7), tau_d(7), ctrl_velocity(6), position_err(6);
-        
+
         ctrl_velocity.setZero();
         position_err.setZero();
         position_err(0) = pos_imp_t(0) + position_init(0) - position(0);
         position_err(1) = pos_imp_t(1) + position_init(1) - position(1);
         position_err(2) = pos_imp_t(2) + position_init(2) - position(2);
-        
+
         ctrl_velocity = velocity_d_ + Kpos*position_err;
-        
+
         joint_velocity_d.setZero();
         joint_velocity_d = Jpinv*ctrl_velocity;
-        
+
         joint_pos_d += joint_velocity_d*0.001;
-        
+
         int_jnt_pos_err += (joint_pos_d - q)*0.001;
-        
+
         tau_ctrl << Kp*(joint_pos_d - q) + Kd*(joint_velocity_d - dq_filt_Eigen) + Ki*int_jnt_pos_err; // + Ki*int_jnt_pos_err;
 
         tau_d << tau_ctrl + coriolis;
-        
+
         Eigen::VectorXd tau_friction(7), sign_dq(7), mask_dq(7);
-        
+
         std::array<double, 7> max_f1 = {1.5,1.5,1.5,1.5,1.5,1.5,1.5};
         std::array<double, 7> max_f2 = {1.5,1.5,1.5,1.5,1.5,1.5,1.5};
         std::array<double, 7> max_f3 = {1.5,1.5,1.5,1.5,1.5,1.5,1.5};
@@ -577,14 +580,14 @@ namespace franka_example_controllers {
         std::array<double, 7> min_f3 = {0.,0.,0.,0.,0.,0.,0.};
         std::array<double, 7> min_f4 = {0.,0.,0.,0.,0.,0.,0.};
         std::array<double, 7> min_f5 = {0.,0.,0.,0.,0.,0.,0.};
-        
+
         std::array<double, 35> friction_param = {{ 0.5, 0.67284, 0.722222, 0.228395, 0.833333, 0.709877, 0.796296, 0.685185, 0.771605, 0.648148, 0.685185, 0.277778, 0.154321, 0.462963, 0.240741, 0.32716, 0.907407, 0.87037, 0.117284, 0.314815, 0.648148, 0.314815, 0.277778, 0.907407, 0.759259, 0.796296, 0.685185, 0.685185, 0.660494, 0.524691, 0.166667, 0.685185, 0.438272, 0.722222, 0.314815 }};
-        
+
         for (int j = 0; j < 7; ++j)
         {
-            
+
             if (abs(tau_d(j))>0.01)
-            {   
+            {
                 mask_dq(j) = 1.;
                 sign_dq(j) = tau_d(j)/abs(tau_d(j));
             }
@@ -593,18 +596,18 @@ namespace franka_example_controllers {
                 mask_dq(j) = 0.;
                 sign_dq(j) = 0.;
             }
-            
+
             double p1 = (min_f1[j] + friction_param[j]/5.*(max_f1[j]-min_f1[j]));
             double p2 = (min_f2[j] + friction_param[j+7]/5.*(max_f2[j]-min_f2[j]));
             double p3 = (min_f3[j] + friction_param[j+14]/5.*(max_f3[j]-min_f3[j]));
             double p4 = (min_f4[j] + friction_param[j+21]/5.*(max_f4[j]-min_f4[j]));
             double p5 = (min_f5[j] + friction_param[j+28]/5.*(max_f5[j]-min_f5[j]));
-            
+
             tau_friction(j) = 0.;
-            
+
             tau_friction(j) = - ( p1*dq_filt_Eigen(j)*mask_dq(j) - (p2 + (p3)*exp(-pow( abs( dq_filt_Eigen(j)*p4 ) , p5)))*sign_dq(j) );
         }
-        
+
         tau_d += tau_friction;
 
         // to print in the first 10 instants
@@ -684,7 +687,7 @@ namespace franka_example_controllers {
         printf("%f \n", ext_wrench(2) );
 
         printf("********************** \n");
-        
+
 
         std::array<double, 7> tau_d_array{};
         Eigen::VectorXd::Map(&tau_d_array[0], 7) = tau_d;
@@ -732,7 +735,7 @@ namespace franka_example_controllers {
         stiffness_importata = msg->data;
     }
 
-} 
+}
 
 PLUGINLIB_EXPORT_CLASS(franka_example_controllers::CartesianImpedanceMBRLController,
     controller_interface::ControllerBase)
