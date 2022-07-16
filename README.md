@@ -42,6 +42,11 @@ Physical human-robot collaboration is increasingly required in many contexts (su
 
 The proposed control strategy has been validated through a comparison with the [Model-Based Reinforcement Learning Variable Impedance Control](https://doi.org/10.1007/s10846-020-01183-3) (MBRLVIC), a previously developed method available in literature. Both these algorithms are developed in the present repository.
 
+### Content
+
+In folder [franka_example_controllers][frankaexamplecontrollers] a set of example controllers for controlling the robot via ROS are implemented. Among them, there are the two low-level cartesian impedance controllers to run the Q-LMPVIC ([cartesian_impedance_QLMPC_controller.h][impedance_QLMPC]) and the MBRLVIC ([cartesian_impedance_MBRL_controller.h][impedance_MBRL]) updating strategies.
+
+These stretegies are implemented in folder [Updating stategies][updatingstrategies] ([Q_LMPC_simplified_revised.py][QLMPC]) ([MBRL_controller_confronto.py][MBRL]). The other files refer to past versions of the abovementioned codes. In the same folder are available also the models of the pre-trained artificial neural networks and the data used to normalize them.
 
 ### Built With
 
@@ -49,11 +54,10 @@ The proposed control strategy has been validated through a comparison with the [
 * [franka_ros](https://github.com/frankaemika/franka_ros)
 
 
-
 <!-- GETTING STARTED -->
 ## Getting Started
 
-To get a local copy up and running follow these simple steps.
+To get a local copy up and run the controller follow these simple steps.
 
 ### Prerequisites
 
@@ -78,34 +82,38 @@ The present repository contains two main folders. [franka_example_controllers][f
    ```
 
 <!-- USAGE EXAMPLES -->
-## Usage
+### Run the algorithm
 
-In folder [franka_example_controllers][frankaexamplecontrollers] a set of example controllers for controlling the robot via ROS are implemented. Among them, there are the two low-level cartesian impedance controllers to run the Q-LMPVIC ([cartesian_impedance_QLMPC_controller.h][impedance_QLMPC]) and the MBRLVIC ([cartesian_impedance_MBRL_controller.h][impedance_MBRL]) updating strategies.
+First of all, activate the variable impedance controller running the following command inside the folder [franka_example_controllers/include/franka_example_controllers](https://github.com/Andrea8Testa/Laboratorio/tree/main/franka_example_controllers/include/franka_example_controllers):
+```
+cartesian_impedance_QLMPC_controller.h
+```
+Then, move to folder [Updating strategies](https://github.com/Andrea8Testa/Laboratorio/tree/main/Updating%20strategies) and run the QLMPC by the command:
+```
+python Q_LMPC_simplified_revised.py
+```
+Once started, the robot end-effector should stand still  in the initializiation position until the operator touches it. Then, the end-effector is expected to move to minimize the human-interaction force.
 
-These stretegies are implemented in folder [Updating stategies][updatingstrategies] ([Q_LMPC_simplified_revised.py][QLMPC]) ([MBRL_controller_confronto.py][MBRL]). The other files refer to past versions of the abovementioned codes. In the same folder are available also the models of the pre-trained artificial neural networks and the data used to normalize them. 
-
+We set the QLMPC to start with pre-trained artificial neural networks. Comment the following lines if you want to perform your own training.  
+- [model_approximator["NN0"].load_state_dict(torch.load(PATH_model0))](https://github.com/Andrea8Testa/Laboratorio/blob/main/Updating%20strategies/Q_LMPC_simplified_revised.py#L979)
+- [model_approximator["NN1"].load_state_dict(torch.load(PATH_model1))](https://github.com/Andrea8Testa/Laboratorio/blob/main/Updating%20strategies/Q_LMPC_simplified_revised.py#L980)
+- [actor.load_state_dict(torch.load(PATH_actor))](https://github.com/Andrea8Testa/Laboratorio/blob/main/Updating%20strategies/Q_LMPC_simplified_revised.py#L988)
+- [critic.load_state_dict(torch.load(PATH_critic))](https://github.com/Andrea8Testa/Laboratorio/blob/main/Updating%20strategies/Q_LMPC_simplified_revised.py#L989)
 
 <!-- ROADMAP -->
 ## Roadmap
 
 See the [open issues](https://github.com/Andrea8Testa/Laboratorio/issues) for a list of proposed features (and known issues).
 
-
-
-
 <!-- CONTACT -->
 ## Contact
 
 [Andrea Testa][linkedin-url] - email andrea3.testa@gmail.com
 
-
 <!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
 
 The work has been developed within the project ASSASSINN, funded from H2020 CleanSky 2 under grant agreement n. 886977.
-
-
-
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
