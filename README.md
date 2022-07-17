@@ -94,11 +94,46 @@ python Q_LMPC_simplified_revised.py
 ```
 Once started, the robot end-effector should stand still  in the initializiation position until the operator touches it. Then, the end-effector is expected to move to minimize the human-interaction force.
 
+### ANNs settings
+
 We set the QLMPC to start with pre-trained artificial neural networks. Comment the following lines if you want to perform your own training.  
 - [model_approximator["NN0"].load_state_dict(torch.load(PATH_model0))](https://github.com/Andrea8Testa/Laboratorio/blob/main/Updating%20strategies/Q_LMPC_simplified_revised.py#L979)
 - [model_approximator["NN1"].load_state_dict(torch.load(PATH_model1))](https://github.com/Andrea8Testa/Laboratorio/blob/main/Updating%20strategies/Q_LMPC_simplified_revised.py#L980)
 - [actor.load_state_dict(torch.load(PATH_actor))](https://github.com/Andrea8Testa/Laboratorio/blob/main/Updating%20strategies/Q_LMPC_simplified_revised.py#L988)
 - [critic.load_state_dict(torch.load(PATH_critic))](https://github.com/Andrea8Testa/Laboratorio/blob/main/Updating%20strategies/Q_LMPC_simplified_revised.py#L989)
+
+The ANNs are initialized with random weights in range `(1e-2, 1e-1)`.
+
+#### Hyperparameters
+
+|    Model approximator   |     Value     |
+| ----------------------- | ------------- |
+| Number of hidden layers |       5       |
+| Number of hidden units  |      512      |
+| Size of the ensemble    |       2       |
+| Activation function     |     ReLu      |
+|Dropout probability inner layers|  0.2   |
+|Dropout probability last layer|   0.1    |
+|Learning rate|   1e-3    |
+
+|          Actor          |     Value     |
+| ----------------------- | ------------- |
+| Number of hidden layers |       3       |
+| Number of hidden units  |      64       |
+| Activation function inner layers| ReLu  |
+| Activation function last layer |  Tanh  |
+|Dropout probability      |      0.1      |
+|Learning rate for an interaction force < 0.1 N|   5e-5    |
+|Learning rate for an interaction force < 0.5 N|   8e-5    |
+|Learning rate otherwise|   1e-4    |
+
+|         Critic          |     Value     |
+| ----------------------- | ------------- |
+| Number of hidden layers |       3       |
+| Number of hidden units  |      128      |
+| Activation function     |     ReLu      |
+|Dropout probability      |      0.5      |
+|Learning rate|   1e-3    |
 
 <!-- ROADMAP -->
 ## Roadmap
