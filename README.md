@@ -86,7 +86,7 @@ The present repository contains two main folders. [franka_example_controllers][f
 
 First of all, activate the variable impedance controller running the following command inside the folder [franka_example_controllers/include/franka_example_controllers](https://github.com/Andrea8Testa/Laboratorio/tree/main/franka_example_controllers/include/franka_example_controllers):
 ```
-cartesian_impedance_QLMPC_controller.h
+./cartesian_impedance_QLMPC_controller
 ```
 Then, move to folder [Updating strategies](https://github.com/Andrea8Testa/Laboratorio/tree/main/Updating%20strategies) and run the QLMPC by the command:
 ```
