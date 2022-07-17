@@ -102,7 +102,7 @@ We set the QLMPC to start with pre-trained artificial neural networks. Comment t
 - [actor.load_state_dict(torch.load(PATH_actor))](https://github.com/Andrea8Testa/Laboratorio/blob/main/Updating%20strategies/Q_LMPC_simplified_revised.py#L988)
 - [critic.load_state_dict(torch.load(PATH_critic))](https://github.com/Andrea8Testa/Laboratorio/blob/main/Updating%20strategies/Q_LMPC_simplified_revised.py#L989)
 
-The ANNs are initialized with random weights in range `(1e-2, 1e-1)`.
+The ANNs are initialized with random weights in range `(1e-2, 1e-1)`. The QLMPC works at a frequency of `6` Hz, the training buffer size is `5`, so the ANNs are updated every `0.83` seconds. 
 
 #### Hyperparameters
 
